@@ -103,7 +103,7 @@ extern "C" {
         return -1;
     }
 
-    void EXPORT_API SetSimpleForce(int i, Vector3 f) {
+    void EXPORT_API UpdateSimpleForce(int i, Vector3 f) {
         if (falcon) {
             falcon->UpdateSimpleForce(i, f);
         }
@@ -130,7 +130,7 @@ extern "C" {
         return -1;
     }
 
-    void EXPORT_API SetViscosity(int i, float c, float w) {
+    void EXPORT_API UpdateViscosity(int i, float c, float w) {
         if (falcon) {
             falcon->UpdateViscosity(i, c, w);
         }
@@ -157,7 +157,7 @@ extern "C" {
         return -1;
     }
 
-    void EXPORT_API SetSurface(int i, Vector3 p, Vector3 n, float k, float c) {
+    void EXPORT_API UpdateSurface(int i, Vector3 p, Vector3 n, float k, float c) {
         if (falcon) {
             falcon->UpdateSurface(i, p, n, k, c);
         }
@@ -184,7 +184,7 @@ extern "C" {
         return -1;
     }
 
-    void EXPORT_API SetSpring(int i, Vector3 p, float k, float c, float r, float m) {
+    void EXPORT_API UpdateSpring(int i, Vector3 p, float k, float c, float r, float m) {
         if (falcon) {
             falcon->UpdateSpring(i, p, k, c, r, m);
         }
@@ -211,7 +211,7 @@ extern "C" {
         return -1;
     }
 
-    void EXPORT_API SetIntermolecularForce(int i, Vector3 p, float k, float c, float r, float m) {
+    void EXPORT_API UpdateIntermolecularForce(int i, Vector3 p, float k, float c, float r, float m) {
         if (falcon) {
             falcon->UpdateIntermolecularForce(i, p, k, c, r, m);
         }
@@ -238,7 +238,7 @@ extern "C" {
         return -1;
     }
 
-    void EXPORT_API SetRandomForce(int i, float minMag, float maxMag, float minTime, float maxTime) {
+    void EXPORT_API UpdateRandomForce(int i, float minMag, float maxMag, float minTime, float maxTime) {
         if (falcon) {
             falcon->UpdateRandomForce(i, minMag, maxMag, minTime, maxTime);
         }
