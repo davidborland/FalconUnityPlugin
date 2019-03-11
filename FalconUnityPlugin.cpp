@@ -46,6 +46,12 @@ extern "C" {
         }
     }
 
+	void EXPORT_API ResetForces() {
+		if (falcon) {
+			falcon->ResetForces();
+		}
+	}
+
     Vector3 EXPORT_API GetPosition() {
         if (falcon) {
             return falcon->GetPosition();
@@ -88,30 +94,30 @@ extern "C" {
     }
 
 
-    // Constant forces
-    int EXPORT_API AddConstantForce(Vector3 f) {
+    // Simple forces
+    int EXPORT_API AddSimpleForce(Vector3 f) {
         if (falcon) {
-            return falcon->AddConstantForce(f);
+            return falcon->AddSimpleForce(f);
         }
 
         return -1;
     }
 
-    void EXPORT_API SetConstantForce(int i, Vector3 f) {
+    void EXPORT_API SetSimpleForce(int i, Vector3 f) {
         if (falcon) {
-            falcon->SetConstantForce(i, f);
+            falcon->UpdateSimpleForce(i, f);
         }
     }
 
-    void EXPORT_API RemoveConstantForce(int i) {
+    void EXPORT_API RemoveSimpleForce(int i) {
         if (falcon) {
-            falcon->RemoveConstantForce(i);
+            falcon->RemoveSimpleForce(i);
         }
     }
 
-    void EXPORT_API RemoveConstantForces() {
+    void EXPORT_API RemoveSimpleForces() {
         if (falcon) {
-            falcon->RemoveConstantForces();
+            falcon->RemoveSimpleForces();
         }
     }
 
@@ -126,7 +132,7 @@ extern "C" {
 
     void EXPORT_API SetViscosity(int i, float c, float w) {
         if (falcon) {
-            falcon->SetViscosity(i, c, w);
+            falcon->UpdateViscosity(i, c, w);
         }
     }
 
@@ -143,17 +149,17 @@ extern "C" {
     }  
     
     // Surfaces
-    int EXPORT_API AddSurface(float k, float c, Vector3 p, Vector3 n) {
+    int EXPORT_API AddSurface(Vector3 p, Vector3 n, float k, float c) {
         if (falcon) {
-            return falcon->AddSurface(k, c, p, n);
+            return falcon->AddSurface(p, n, k, c);
         }
         
         return -1;
     }
 
-    void EXPORT_API SetSurface(int i, float k, float c, Vector3 p, Vector3 n) {
+    void EXPORT_API SetSurface(int i, Vector3 p, Vector3 n, float k, float c) {
         if (falcon) {
-            falcon->SetSurface(i, k, c, p, n);
+            falcon->UpdateSurface(i, p, n, k, c);
         }
     }
 
@@ -170,17 +176,17 @@ extern "C" {
     }
 
     // Springs
-    int EXPORT_API AddSpring(float k, float c, float r, float m, Vector3 p) {
+    int EXPORT_API AddSpring(Vector3 p, float k, float c, float r, float m) {
         if (falcon) {
-            return falcon->AddSpring(k, c, r, m, p);
+            return falcon->AddSpring(p, k, c, r, m);
         }
         
         return -1;
     }
 
-    void EXPORT_API SetSpring(int i, float k, float c, float r, float m, Vector3 p) {
+    void EXPORT_API SetSpring(int i, Vector3 p, float k, float c, float r, float m) {
         if (falcon) {
-            falcon->SetSpring(i, k, c, r, m, p);
+            falcon->UpdateSpring(i, p, k, c, r, m);
         }
     }
     
@@ -197,17 +203,17 @@ extern "C" {
     }
 
     // Intermolecular forces
-    int EXPORT_API AddIntermolecularForce(float k, float c, float r, float m, Vector3 p) {
+    int EXPORT_API AddIntermolecularForce(Vector3 p, float k, float c, float r, float m) {
         if (falcon) {
-            return falcon->AddIntermolecularForce(k, c, r, m, p);
+            return falcon->AddIntermolecularForce(p, k, c, r, m);
         }
         
         return -1;
     }
 
-    void EXPORT_API SetIntermolecularForce(int i, float k, float c, float r, float m, Vector3 p) {
+    void EXPORT_API SetIntermolecularForce(int i, Vector3 p, float k, float c, float r, float m) {
         if (falcon) {
-            falcon->SetIntermolecularForce(i, k, c, r, m, p);
+            falcon->UpdateIntermolecularForce(i, p, k, c, r, m);
         }
     }
     
@@ -234,7 +240,7 @@ extern "C" {
 
     void EXPORT_API SetRandomForce(int i, float minMag, float maxMag, float minTime, float maxTime) {
         if (falcon) {
-            falcon->SetRandomForce(i, minMag, maxMag, minTime, maxTime);
+            falcon->UpdateRandomForce(i, minMag, maxMag, minTime, maxTime);
         }
     }
     

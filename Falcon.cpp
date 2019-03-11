@@ -238,8 +238,36 @@ void Falcon::SetGraphicsWorkspace(Vector3 center, Vector3 size) {
                                               useUniformScale,
                                               haptics2graphics);
 
+	// Create tranform to match direction of graphics space to haptic space for forces
+
+	for (int i = 0; i < 16; i++) {
+		if (i % 4 == 0) printf("\n");
+		printf("%f\t", haptics2graphics[i]);
+	}
+
+	for (int i = 0; i < 16; i++) {
+		double v = haptics2graphics[i];
+		graphics2haptics[i] = v == 0.0 ? 0.0 : v / fabs(v);
+	}
+
+	for (int i = 0; i < 16; i++) {
+		if (i % 4 == 0) printf("\n");
+		printf("%f\t", graphics2haptics[i]);
+	}
+
     // Synchronize state
     hdlCreateServoOp(SynchronizeCB, this, true);
+}
+
+
+void Falcon::ResetForces() {
+	// Remove all force effects
+	RemoveSimpleForces();
+	RemoveViscosities();
+	RemoveSurfaces();
+	RemoveSprings();
+	RemoveIntermolecularForces();
+	RemoveRandomForces();
 }
 
 
@@ -269,25 +297,25 @@ void Falcon::SetProxyPosition(Vector3 p) {
 }
 
 
-// Constant forces
-int Falcon::AddConstantForce(Vector3 f) {
-    ConstantForce cf;
-    VectorSet(cf.f, f.x, f.y, f.z);
+// Simple forces
+int Falcon::AddSimpleForce(Vector3 f) {
+	SimpleForce sf;
+    VectorSet(sf.f, f.x, f.y, f.z);
 
-    return constantForces.Add(cf);
+    return simpleForces.Add(sf);
 }
 
-void Falcon::SetConstantForce(int i, Vector3 f) {
-    ConstantForce* cf = constantForces.Get(i);
-    VectorSet(cf->f, f.x, f.y, f.z);
+void Falcon::UpdateSimpleForce(int i, Vector3 f) {
+	SimpleForce* sf = simpleForces.Get(i);
+    VectorSet(sf->f, f.x, f.y, f.z);
 }
 
-void Falcon::RemoveConstantForce(int i) {
-    constantForces.Remove(i);
+void Falcon::RemoveSimpleForce(int i) {
+	simpleForces.Remove(i);
 }
 
-void Falcon::RemoveConstantForces() {
-    constantForces.RemoveAll();
+void Falcon::RemoveSimpleForces() {
+	simpleForces.RemoveAll();
 }
 
 // Viscosities
@@ -295,11 +323,12 @@ int Falcon::AddViscosity(float c, float w) {
     Viscosity v;
     v.c = c;
     v.w = w;
+	VectorSet(v.oldForce, 0.0, 0.0, 0.0);
 
     return viscosities.Add(v);
 }
 
-void Falcon::SetViscosity(int i, float c, float w) {
+void Falcon::UpdateViscosity(int i, float c, float w) {
     Viscosity* v = viscosities.Get(i);
     v->c = c;
     v->w = w;
@@ -314,7 +343,7 @@ void Falcon::RemoveViscosities() {
 }
 
 // Surfaces
-int Falcon::AddSurface(float k, float c, Vector3 p, Vector3 n) {
+int Falcon::AddSurface(Vector3 p, Vector3 n, float k, float c) {
     Surface s;
     s.k = k;
     s.c = c;
@@ -324,7 +353,7 @@ int Falcon::AddSurface(float k, float c, Vector3 p, Vector3 n) {
     return surfaces.Add(s);
 }
 
-void Falcon::SetSurface(int i, float k, float c, Vector3 p, Vector3 n) {
+void Falcon::UpdateSurface(int i, Vector3 p, Vector3 n, float k, float c) {
     Surface* s = surfaces.Get(i);
     s->k = k;
     s->c = c;
@@ -341,7 +370,7 @@ void Falcon::RemoveSurfaces() {
 }
 
 // Springs
-int Falcon::AddSpring(float k, float c, float r, float m, Vector3 p) {
+int Falcon::AddSpring(Vector3 p, float k, float c, float r, float m) {
     Spring s;
     s.k = k;
     s.c = c;
@@ -352,7 +381,7 @@ int Falcon::AddSpring(float k, float c, float r, float m, Vector3 p) {
     return springs.Add(s);
 }
 
-void Falcon::SetSpring(int i, float k, float c, float r, float m, Vector3 p) {
+void Falcon::UpdateSpring(int i, Vector3 p, float k, float c, float r, float m) {
     Spring* s = springs.Get(i);
     s->k = k;
     s->c = c;
@@ -370,7 +399,7 @@ void Falcon::RemoveSprings() {
 }
 
 // Intermolecular forces
-int Falcon::AddIntermolecularForce(float k, float c, float r, float m, Vector3 p) {
+int Falcon::AddIntermolecularForce(Vector3 p, float k, float c, float r, float m) {
     IntermolecularForce imf;
     imf.k = k;
     imf.c = c;
@@ -381,7 +410,7 @@ int Falcon::AddIntermolecularForce(float k, float c, float r, float m, Vector3 p
     return intermolecularForces.Add(imf);
 }
 
-void Falcon::SetIntermolecularForce(int i, float k, float c, float r, float m, Vector3 p) {
+void Falcon::UpdateIntermolecularForce(int i, Vector3 p, float k, float c, float r, float m) {
     IntermolecularForce* imf = intermolecularForces.Get(i);
     imf->k = k;
     imf->c = c;
@@ -409,7 +438,7 @@ int Falcon::AddRandomForce(float minMag, float maxMag, float minTime, float maxT
     return randomForces.Add(rf);
 }
 
-void Falcon::SetRandomForce(int i, float minMag, float maxMag, float minTime, float maxTime) {
+void Falcon::UpdateRandomForce(int i, float minMag, float maxMag, float minTime, float maxTime) {
     RandomForce* rf = randomForces.Get(i);
     rf->minMag = minMag;
     rf->maxMag = maxMag;
@@ -435,7 +464,7 @@ void Falcon::ComputeForce() {
     double dt = time - oldTime;
 
     // Adjusting this affects "kicking" when changing viscosity
-    if (dt <= 1e-4) return;
+ //   if (dt <= 1e-4) return;
 
     // Set position to use for force calculations
     // If using force feedback, use device position
@@ -456,8 +485,8 @@ void Falcon::ComputeForce() {
     // Initialize force
     VectorSet(force, 0.0, 0.0, 0.0);
     
-    // Add constant forces
-    for (auto it = constantForces.Begin(); it != constantForces.End(); ++it) {
+    // Add simple forces
+    for (auto it = simpleForces.Begin(); it != simpleForces.End(); ++it) {
         VectorAdd(force, force, it->second.f);
     }
 
@@ -495,6 +524,9 @@ void Falcon::ComputeForce() {
         ComputeRandomForce(rf, it->second, time);
         VectorAdd(force, force, rf);
     }
+
+	// Tranform force
+	MatrixVectorMultiply(force, graphics2haptics, force);
   
 
     // Set force
@@ -556,8 +588,6 @@ void Falcon::ComputeSurfaceForce(double force[3], const Surface s, const double 
     VectorScale(fd, velocity, -s.c);
 
     VectorAdd(force, force, fd);
-
-    force[2] = 0.0;
 }
 
 void Falcon::ComputeSpringForce(double force[3], const Spring s, const double velocity[3]) { 
@@ -569,7 +599,7 @@ void Falcon::ComputeSpringForce(double force[3], const Spring s, const double ve
     double d = VectorMagnitude(dv);
 
     // Check for max length
-    if (s.m >= 0.0 && d > s.m) {
+    if (s.m > 0.0 && d > s.m) {
         // Break
         return;
     }

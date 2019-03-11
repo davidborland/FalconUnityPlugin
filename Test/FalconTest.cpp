@@ -19,75 +19,97 @@ HDLServoOpExitCode ForCB(void* userData) {
     return HDL_SERVOOP_EXIT;
 }
 
-int main() {
-    Falcon* falcon = new Falcon();
-    falcon->Initialize();
+void printUsage(char** argv) {
+	printf("Usage: %s -option\n", argv[0]);
+	printf("Options:\n");
+	printf("\tsimple\n");
+	printf("\tviscosity\n");
+	printf("\tsurface\n");
+	printf("\tspring\n");
+	printf("\tintermolecular\n");
+	printf("\trandom\n");
+}
 
-    Vector3 center;
-    center.x = center.y = center.z = 0.0;
+int main(int argc, char** argv) {
+	if (argc != 2) {
+		printUsage(argv);
+		printf("\nNo option provided, defaulting to simple\n");
+	}
 
-    Vector3 size;
-    size.x = size.y = size.z = 10.0;
+	// Initialize Falcon
+	Falcon* falcon = new Falcon();
+	falcon->Initialize();
 
-    falcon->SetGraphicsWorkspace(center, size);
-    
-    // Constant force
-    /*
-    Vector3 f;
-    f.x = f.z = 0.0;
-    f.y = -5.0;
+	Vector3 center;
+	center.x = center.y = center.z = 0.0;
 
-    falcon->AddConstantForce(f);
-    */
+	Vector3 size;
+	size.x = size.y = size.z = 10.0;
 
-    // Viscosity
-    //falcon->AddViscosity(0.5, 0.1);
+	falcon->SetGraphicsWorkspace(center, size);
 
-    // Surface
-    /*
-    Vector3 p;
-    p.x = p.y = p.z = 0.0;
+	// Create force effect
+	if (argc != 2 || strcmp(argv[1], "-simple") == 0) {
+		// Simple force
+		Vector3 f;
+		f.x = f.z = 0.0;
+		f.y = -5.0;
 
-    Vector3 n;
-    n.x = n.z = 0.0;
-    n.y = 1.0;
+		falcon->AddSimpleForce(f);
+	}
+	else if (strcmp(argv[1], "-viscosity") == 0) {
+		falcon->AddViscosity(0.5);
+	}
+	else if (strcmp(argv[1], "-surface") == 0) {
+		Vector3 p;
+		p.x = p.y = p.z = 0.0;
 
-    falcon->AddSurface(2.0, 0.01, p, n);
-    */
+		Vector3 n;
+		n.x = n.z = 0.0;
+		n.y = 1.0;
 
-    // Spring
-    /*
-    Vector3 p;
-    p.x = p.y = p.z = 0.0;
+		falcon->AddSurface(p, n, 20.0f, 0.01f);
+	}
+	else if (strcmp(argv[1], "-spring") == 0) {
+		Vector3 p;
+		p.x = p.y = p.z = 0.0;
 
-    falcon->AddSpring(2.0, 0.01, 0.0, 2.5, p);
-    */
+		falcon->AddSpring(p, 2.0f, 0.01f);
+	}
+	else if (strcmp(argv[1], "-intermolecular") == 0) {
+		Vector3 p;
+		p.x = p.y = p.z = 0.0f;
 
-    // Intermolecular force
-    /*
-    Vector3 p;
-    p.x = p.y = p.z = 0.0f;
+		falcon->AddIntermolecularForce(p, 10.0f, 0.01f, 2.0f, 4.0f);
+	}
+	else if (strcmp(argv[1], "-random") == 0) {
+		falcon->AddRandomForce(1.0f, 5.0f, 0.01f, 0.1f);
+	}
+	else {
+		printUsage(argv);
+		printf("\nInvalid option, defaulting to simple\n");
 
-    falcon->AddIntermolecularForce(10.0f, 0.01f, 2.0f, 4.0f, p);
-    */
-    
+		// Simple force
+		Vector3 f;
+		f.x = f.z = 0.0;
+		f.y = -5.0;
 
-    // Random force
-    //falcon->AddRandomForce(1.0, 5.0, 0.01, 0.1);
-
-
-    Vector3 v;
-    v.x = 5;
-    v.y = 0;
-    v.z = 0;
-
-    int id = falcon->AddConstantForce(v);
+		falcon->AddSimpleForce(f);
+	}
 
     while (1) {
-        v.x *= -1.0;
-        falcon->SetConstantForce(id, v);
+		Vector3 p = falcon->GetPosition();
         Vector3 f = falcon->GetForce();
-        printf("%f %f %f\n", f.x, f.y, f.z);
+
+		bool b0 = falcon->GetButton(0);
+		bool b1 = falcon->GetButton(1);
+		bool b2 = falcon->GetButton(2);
+		bool b3 = falcon->GetButton(3);
+		
+		printf("---------------------------------\n");
+		printf("Position: %f %f %f\n", p.x, p.y, p.z);
+        printf("Force: %f %f %f\n", f.x, f.y, f.z);
+		printf("Buttons: %d %d %d %d\n", b0, b1, b2, b3);		
     }
 
     return 0;

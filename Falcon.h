@@ -31,8 +31,8 @@ struct Vector3 {
 };
 
 
-// Struct for constant force
-struct ConstantForce {
+// Struct for simple force
+struct SimpleForce {
     double f[3];
 };
 
@@ -101,6 +101,9 @@ public:
     // Set the workspace of the graphics scene that will be mapped to the device workspace
     void SetGraphicsWorkspace(Vector3 center, Vector3 size);
 
+	// Reset forces
+	void ResetForces();
+
 
     // Get the device position
     Vector3 GetPosition();
@@ -119,39 +122,40 @@ public:
     void SetProxyPosition(Vector3 p);
 
 
-    // Constant forces
-    int AddConstantForce(Vector3 f);
-    void SetConstantForce(int i, Vector3 f);
-    void RemoveConstantForce(int i);
-    void RemoveConstantForces();
+    // Simple forces
+    int AddSimpleForce(Vector3 f);
+    void UpdateSimpleForce(int i, Vector3 f);
+    void RemoveSimpleForce(int i);
+    void RemoveSimpleForces();
 
     // Viscosities
     // c: Damping coefficient
     // w: Heuristic weighting factor in the range 0 to 1 used to interpolate
     //    between the previous viscous force and the current viscous force to reduce vibration. 
     //    A value of 0 will give no weight to the current viscous force, and 1 will give full weight.
-    int AddViscosity(float c, float w);
-    void SetViscosity(int i, float c, float w);
+    int AddViscosity(float c, float w = 0.25f);
+    void UpdateViscosity(int i, float c, float w = 0.25f);
     void RemoveViscosity(int i);
     void RemoveViscosities();
 
-    // Set contact surfaces
-    // k: Spring constant
-    // c: Damping coefficient
+    // Contact surfaces
     // p: Surface contact point. Using the center of the haptic proxy results in a dilation of the surface by the proxy radius.
     // n: Surface normal
-    int AddSurface(float k, float c, Vector3 p, Vector3 n);
-    void SetSurface(int i, float k, float c, Vector3 p, Vector3 n);
+    // k: Spring constant
+    // c: Damping coefficient
+    int AddSurface(Vector3 p, Vector3 n, float k, float c);
+    void UpdateSurface(int i, Vector3 p, Vector3 n, float k, float c);
     void RemoveSurface(int i);
     void RemoveSurfaces();
 
     // Springs
+	// p: Position
     // k: Spring constant
     // c: Damping coefficient
     // r: Rest length
     // m: Maximum length. Negative value for no maximum.
-    int AddSpring(float k, float c, float r, float m, Vector3 p);
-    void SetSpring(int i, float k, float c, float r, float m, Vector3 p);
+    int AddSpring(Vector3 p, float k, float c, float r = 0.0f, float m = -1.0f);
+    void UpdateSpring(int i, Vector3 p, float k, float c, float r = 0.0f, float m = -1.0f);
     void RemoveSpring(int i);
     void RemoveSprings();
 
@@ -168,12 +172,13 @@ public:
     //   |   | 
     //   r   m
     //
+	// p: Position
     // k: Spring constant
     // c: Damping coefficient
     // r: Bond length
     // m: Maximum length, beyond which bond is "broken"
-    int AddIntermolecularForce(float k, float c, float r, float m, Vector3 p);
-    void SetIntermolecularForce(int i, float k, float c, float r, float m, Vector3 p);
+    int AddIntermolecularForce(Vector3 p, float k, float c, float r, float m);
+    void UpdateIntermolecularForce(int i, Vector3 p, float k, float c, float r, float m);
     void RemoveIntermolecularForce(int i);
     void RemoveIntermolecularForces();
 
@@ -183,7 +188,7 @@ public:
     // minTime: Minimum time interval to apply force
     // maxTime: Maximum time interval to apply force
     int AddRandomForce(float minMag, float maxMag, float minTime, float maxTime);
-    void SetRandomForce(int i, float minMag, float maxMag, float minTime, float maxTime);
+    void UpdateRandomForce(int i, float minMag, float maxMag, float minTime, float maxTime);
     void RemoveRandomForce(int i);
     void RemoveRandomForces();
 
@@ -210,7 +215,7 @@ protected:
 
 
     // Haptic effects 
-    ForceContainer<ConstantForce> constantForces;
+    ForceContainer<SimpleForce> simpleForces;
     ForceContainer<Viscosity> viscosities;
     ForceContainer<Surface> surfaces;
     ForceContainer<Spring> springs;
@@ -221,8 +226,9 @@ protected:
     // Device workspace dimensions
     double workspace[6];
 
-    // Transform from haptics space to graphics space
+    // Transforms
     double haptics2graphics[16];
+	double graphics2haptics[16];
 
 
     // Handle to device
