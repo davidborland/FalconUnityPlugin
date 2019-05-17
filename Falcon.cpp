@@ -239,20 +239,28 @@ void Falcon::SetGraphicsWorkspace(Vector3 center, Vector3 size) {
                                               haptics2graphics);
 
 	// Create tranform to match direction of graphics space to haptic space for forces
-
+	
+	std::cout << std::endl;
 	for (int i = 0; i < 16; i++) {
-		if (i % 4 == 0) printf("\n");
-		printf("%f\t", haptics2graphics[i]);
+		if (i % 4 == 0) std::cout << std::endl;
+		std::cout << haptics2graphics[i] << "\t";
 	}
 
 	for (int i = 0; i < 16; i++) {
-		double v = haptics2graphics[i];
-		graphics2haptics[i] = v == 0.0 ? 0.0 : v / fabs(v);
+		// Only use diagonal for scale
+		if (i % 4 == i / 4) {
+			double v = haptics2graphics[i];
+			graphics2haptics[i] = v == 0.0 ? 0.0 : v / fabs(v);
+		}
+		else {
+			graphics2haptics[i] = 0.0;
+		}
 	}
 
+	std::cout << std::endl;
 	for (int i = 0; i < 16; i++) {
-		if (i % 4 == 0) printf("\n");
-		printf("%f\t", graphics2haptics[i]);
+		if (i % 4 == 0) std::cout << std::endl;
+		std::cout << graphics2haptics[i] << "\t";
 	}
 
     // Synchronize state
